@@ -7,6 +7,7 @@ class CallBacks (Enum):
     feedback = 'feedback'
     add_person = 'add_person'
 
+
 class DialogStatuses(Enum):
     none = 'None'
 

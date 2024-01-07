@@ -5,7 +5,8 @@ from aiogram.types import (
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
 )
-from enums import CallBacks, ButtonsText
+from enums import ButtonsText, CallBacks
+from sqlite_db import db_functions
 
 main_menu_kb = [
     [InlineKeyboardButton(text=ButtonsText.presenters.value, callback_data=CallBacks.presenters.value)],
@@ -14,9 +15,25 @@ main_menu_kb = [
 ]
 main_menu_mk = InlineKeyboardMarkup(inline_keyboard=main_menu_kb)
 
-staff_list_kb = [
-    [InlineKeyboardButton(text=ButtonsText.main_menu.value, callback_data=CallBacks.main_menu.value)],
-    [InlineKeyboardButton(text=ButtonsText.add_person.value, callback_data=CallBacks.add_person.value)],
-    
-]
-staff_list_mk = InlineKeyboardMarkup(inline_keyboard=staff_list_kb)
+
+def staff_list_mk_generator ():
+    staff = db_functions.get_staff()
+    print (staff)
+    staff_list = [
+        [InlineKeyboardButton(text=ButtonsText.main_menu.value, callback_data=CallBacks.main_menu.value)],
+        [InlineKeyboardButton(text=ButtonsText.add_person.value, callback_data=CallBacks.add_person.value)],
+        
+    ]
+    for staff_id in staff:
+        user_id = staff_id[0]
+        username = db_functions.get_username(user_id=user_id)
+        role = db_functions.get_role(user_id=user_id)
+        staff_list.append([InlineKeyboardButton(text=username, callback_data='username'),
+                           InlineKeyboardButton(text=role, callback_data='role'),
+                           InlineKeyboardButton(text='-', callback_data='delete')])
+    staff_list.append(
+        [InlineKeyboardButton(text="<", callback_data="previous"), 
+         InlineKeyboardButton(text='&&&', callback_data='page'),
+         InlineKeyboardButton(text='>', callback_data='next')]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=staff_list)

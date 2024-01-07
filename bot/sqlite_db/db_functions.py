@@ -44,6 +44,12 @@ def get_username(user_id):
     )
     return cursor.fetchall()[0][0]
 
+def get_staff():
+    cursor.execute(
+        'SELECT user_id FROM users WHERE status = "active"'
+    )
+    return cursor.fetchall()
+
 def set_dialog_status(user_id, dialog_status):
     cursor.execute(
         'UPDATE users SET dialog_status = ? WHERE user_id = ?',

@@ -37,7 +37,8 @@ async def send_poll_reply_handler(clbck: CallbackQuery):
 @router.callback_query(F.data == CallBacks.presenters.value)
 async def presenters_reply_handler(clbck: CallbackQuery):
     await clbck.message.edit_text(text=MenuTexts.presenters.value)
-    await clbck.message.edit_reply_markup(reply_markup=director_keyboards.staff_list_mk)
+    staff_list_mk = director_keyboards.staff_list_mk_generator()
+    await clbck.message.edit_reply_markup(reply_markup=staff_list_mk)
 
 
 @router.callback_query(F.data == CallBacks.feedback.value)
