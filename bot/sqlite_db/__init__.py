@@ -1,1 +1,1 @@
-from .db_functions import connect_db, add_user
+from .db_functions import add_user, connect_db, get_role

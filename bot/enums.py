@@ -1,7 +1,10 @@
 from enum import Enum
 
 class CallBacks (Enum):
-    a = '0'
+    main_menu = 'main_menu'
+    presenters = 'presenters'
+    send_poll = 'send_poll'
+    feedback = 'feedback'
 
 class DialogStatuses(Enum):
     a = '0'
@@ -13,3 +16,6 @@ class Statuses(Enum):
 class Roles(Enum):
     director = 'director'
     delegate = 'delegate'
+
+class Texts(Enum):
+    main_menu = 'Главное меню'

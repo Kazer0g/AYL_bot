@@ -29,3 +29,10 @@ def add_user (username, user_id, role):
         )
         conn.commit()
         return cursor.fetchall()[0][0]
+    
+def get_role(user_id):
+    cursor.execute(
+        'SELECT role FROM users WHERE user_id = ?',
+        (user_id,)
+    )
+    return cursor.fetchall()[0][0]
