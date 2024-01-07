@@ -1,2 +1,2 @@
 # AYL_bot
-Telegram bot for association of young leaders
+Telegram bot for "Association of young leaders"
