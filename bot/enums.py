@@ -5,9 +5,10 @@ class CallBacks (Enum):
     presenters = 'presenters'
     send_poll = 'send_poll'
     feedback = 'feedback'
+    add_person = 'add_person'
 
 class DialogStatuses(Enum):
-    a = '0'
+    none = 'None'
 
 class Statuses(Enum):
     status_inactive = 'inactive'
@@ -17,5 +18,15 @@ class Roles(Enum):
     director = 'director'
     delegate = 'delegate'
 
-class Texts(Enum):
+class MenuTexts(Enum):
     main_menu = 'Главное меню'
+    presenters = 'Штат'
+
+class ButtonsText(Enum):
+    presenters = 'Ведущие'
+    send_poll = 'Отправить анкету'
+    feedback = 'Посмотреть обратную связь'
+
+    add_person = 'Добавить человека'
+
+    main_menu = 'В главное меню'

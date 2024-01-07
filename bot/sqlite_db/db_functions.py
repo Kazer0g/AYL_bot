@@ -29,10 +29,26 @@ def add_user (username, user_id, role):
         )
         conn.commit()
         return cursor.fetchall()[0][0]
-    
+
 def get_role(user_id):
     cursor.execute(
         'SELECT role FROM users WHERE user_id = ?',
         (user_id,)
     )
     return cursor.fetchall()[0][0]
+
+def get_username(user_id):
+    cursor.execute(
+        'SELECT username FROM users WHERE user_id = ?',
+        (user_id,)
+    )
+    return cursor.fetchall()[0][0]
+
+def set_dialog_status(user_id, dialog_status):
+    cursor.execute(
+        'UPDATE users SET dialog_status = ? WHERE user_id = ?',
+        (dialog_status, user_id)
+    )
+    conn.commit()
+    username = get_username(user_id=user_id)
+    logging.info(f'{username} dialog status changed: {dialog_status}')
