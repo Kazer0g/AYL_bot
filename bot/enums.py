@@ -5,3 +5,11 @@ class CallBacks (Enum):
 
 class DialogStatuses(Enum):
     a = '0'
+
+class Statuses(Enum):
+    status_inactive = 'inactive'
+    status_active = 'active'
+
+class Roles(Enum):
+    director = 'director'
+    delegate = 'delegate'
