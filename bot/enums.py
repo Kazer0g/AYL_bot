@@ -1,11 +1,18 @@
 from enum import Enum
 
+
 class CallBacks (Enum):
     main_menu = 'main_menu'
     presenters = 'presenters'
     send_poll = 'send_poll'
     feedback = 'feedback'
     add_person = 'add_person'
+    username_prefix = 'username'
+    role_prefix = 'role'
+    delete_prefix = 'delete'
+    prefix_divider = ':'
+    
+    data_divider = '-'
 
 
 class DialogStatuses(Enum):

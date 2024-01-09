@@ -2,7 +2,7 @@ import texts
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
-from enums import CallBacks, DialogStatuses, Roles, MenuTexts
+from enums import CallBacks, DialogStatuses, MenuTexts, Roles
 from keyboards import common_keyboards, director_keyboards
 from sqlite_db import add_user, get_role, set_dialog_status
 
@@ -44,3 +44,19 @@ async def presenters_reply_handler(clbck: CallbackQuery):
 @router.callback_query(F.data == CallBacks.feedback.value)
 async def feedback_reply_handler(clbk: CallbackQuery):
     pass
+
+@router.callback_query(F.data == F.data)
+async def custom_reply_handler(clbck: CallbackQuery):
+    role = get_role(user_id=clbck.from_user.id)
+    match role:
+        case Roles.delegate.value:
+            pass
+        case Roles.director.value:
+            clbck_prefix, clbck_data = clbck.data.split(CallBacks.prefix_divider.value)
+            match clbck_prefix:
+                case CallBacks.username_prefix.value:
+                    pass
+                case CallBacks.role_prefix.value:
+                    pass
+                case CallBacks.delete_prefix.value:
+                    await clbck.message.answer(text=texts.delete_from_stuff_message_generator(username=clbck_data, role=Roles.delegate.value))
