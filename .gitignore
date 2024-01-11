@@ -1,2 +1,2 @@
 src.py
-db.db
+bot/sqlite_db/db.db

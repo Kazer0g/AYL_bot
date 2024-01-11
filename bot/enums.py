@@ -8,6 +8,7 @@ class CallBacks (Enum):
     main_menu = 'main_menu'
     presenters = 'presenters'
     send_poll = 'send_poll'
+    polls = 'polls'
     feedback = 'feedback'
     add_person = 'add_person'
     add_poll = 'add_poll'
@@ -60,3 +61,4 @@ class ButtonsText(Enum):
     no = 'Нет'
 
     main_menu = 'В главное меню'
+    delete = '-'

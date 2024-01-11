@@ -7,13 +7,13 @@ from keyboards import common_keyboards, director_keyboards
 from sqlite_db import (
     add_poll,
     add_user,
+    delete_poll,
+    get_dialog_status,
+    get_main_message_id,
     get_polls,
     get_role,
     set_dialog_status,
     set_main_message_id,
-    get_dialog_status,
-    delete_poll,
-    get_main_message_id,
 )
 
 # from validators import
@@ -24,7 +24,6 @@ async def message_deleter(msg: Message, main_message_id):
     try:
         message_id = msg.message_id
         while message_id > main_message_id:
-                print (message_id)
                 try:
                     await msg.bot.delete_message(chat_id=msg.chat.id, message_id=message_id)
                 except:
@@ -55,7 +54,7 @@ async def main_menu_reply_handler(clbck: CallbackQuery):
             await clbck.message.edit_text(text=MenuTexts.main_menu.value)
             await clbck.message.edit_reply_markup(reply_markup=director_keyboards.main_menu_mk)
 
-@router.callback_query(F.data == CallBacks.send_poll.value)
+@router.callback_query(F.data == CallBacks.polls.value)
 async def send_poll_reply_handler(clbck: CallbackQuery):
     await clbck.message.edit_text(text=MenuTexts.polls.value)
     polls_list_mk = director_keyboards.polls_list_mk_generator()
@@ -63,10 +62,10 @@ async def send_poll_reply_handler(clbck: CallbackQuery):
 
 @router.callback_query(F.data == CallBacks.add_poll.value)
 async def add_poll_reply_handler(clbck: CallbackQuery):
-    await clbck.message.edit_text(text=MenuTexts.poll.value)
-    poll_list_mk = director_keyboards.poll_list_mk_generator()
+    poll_id = add_poll(user_id=clbck.from_user.id)
+    await clbck.message.edit_text(text=f'{MenuTexts.poll.value} id:{poll_id}')
+    poll_list_mk = director_keyboards.poll_list_mk_generator(poll_id=poll_id)
     await clbck.message.edit_reply_markup(reply_markup=poll_list_mk)
-    add_poll(user_id=clbck.from_user.id)
 
 @router.callback_query(F.data == CallBacks.presenters.value)
 async def presenters_reply_handler(clbck: CallbackQuery):
@@ -102,6 +101,29 @@ async def accepr_reply_handler (clbck: CallbackQuery):
                     delete_poll(poll_id=dialog_data)
                     await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(clbck.from_user.id))
                     await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.polls_list_mk_generator())
+                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=DialogStatuses.none.value)
+
+@router.callback_query(F.data == CallBacks.reject.value)
+async def accept_reply_handler (clbck: CallbackQuery):
+    role = get_role(user_id=clbck.from_user.id)
+    match role:
+        case Roles.delegate.value:
+            pass
+        case Roles.director.value:
+            dialog_prefix, dialog_data = get_dialog_status(user_id=clbck.from_user.id).split(CallBacks.prefix_divider.value)
+            match dialog_prefix:
+                case CallBacks.username_prefix.value:
+                    pass
+                case CallBacks.role_prefix.value:
+                    pass
+                case CallBacks.delete_stuff_prefix.value:
+                    pass    
+                case CallBacks.poll_id_prefix.value:
+                    pass
+                case CallBacks.poll_name_prefix.value:
+                    pass
+                case CallBacks.delete_poll_prefix.value:
+                    await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(clbck.from_user.id))
                     
 
 @router.callback_query(F.data == F.data)
@@ -121,7 +143,8 @@ async def custom_reply_handler(clbck: CallbackQuery):
                     await clbck.message.answer(text=texts.delete_from_stuff_message_generator(username=clbck_data, role=Roles.delegate.value), reply_markup=common_keyboards.accept_mk)
                     set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{CallBacks.delete_stuff_prefix.value}{CallBacks.prefix_divider.value}{clbck_data}')
                 case CallBacks.poll_id_prefix.value:
-                    pass
+                    await clbck.message.edit_text(text=f'{MenuTexts.poll.value} id:{clbck_data}')
+                    await clbck.message.edit_reply_markup(reply_markup=director_keyboards.poll_list_mk_generator(poll_id=clbck_data))
                 case CallBacks.poll_name_prefix.value:
                     pass
                 case CallBacks.delete_poll_prefix.value:

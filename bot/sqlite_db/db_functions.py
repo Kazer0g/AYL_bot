@@ -31,14 +31,6 @@ def add_user (username, user_id, role):
         conn.commit()
         return cursor.fetchall()[0][0]
 
-def add_poll(user_id):
-    cursor.execute(
-        'INSERT INTO polls (creator_id) VALUES (?)',
-        (user_id,)
-    )
-    conn.commit()
-    logging.info(f'{get_username(user_id=user_id)} created poll')
-
 def get_mode(user_id):
     cursor.execute(
         'SELECT mode FROM users WHERE user_id = ?',
@@ -70,9 +62,20 @@ def get_username(user_id):
 
 def get_staff():
     cursor.execute(
-        'SELECT user_id FROM users WHERE status = "active"'
-    )
+        'SELECT user_id FROM users WHERE conference_status = "active" AND conference_role != "delegate" AND conference_role != "director"'    )
     return cursor.fetchall()
+
+def add_poll(user_id):
+    cursor.execute(
+        'INSERT INTO polls (creator_id) VALUES (?);',
+        (user_id,)
+    )
+    logging.info(f'{get_username(user_id=user_id)} created poll')
+    cursor.execute(
+        'SELECT last_insert_rowid()',
+    )
+    conn.commit()
+    return cursor.fetchall()[0][0]
 
 def get_polls():
     cursor.execute(
