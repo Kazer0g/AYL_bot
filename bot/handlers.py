@@ -16,6 +16,7 @@ from sqlite_db import (
     set_dialog_status,
     set_main_message_id,
     set_poll_type,
+    set_poll_name,
 )
 
 # from validators import
@@ -177,3 +178,11 @@ async def message_handler(msg: Message):
                 case CallBacks.add_question_prefix.value:
                     question = msg.text
                     await msg.answer(text=texts.SELECT_QUESTION_TYPE, reply_markup=common_keyboards.back_mk)
+                case CallBacks.poll_name_prefix.value:
+                    set_poll_name(poll_id=dialog_data, poll_name=msg.text)
+                    await message_deleter(msg=msg, main_message_id=get_main_message_id(msg.from_user.id))
+                    try:
+                        await msg.bot.edit_message_reply_markup(chat_id=msg.chat.id, message_id=get_main_message_id(msg.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=dialog_data))
+                    except:
+                        pass
+                    set_dialog_status(user_id=msg.from_user.id, dialog_status=DialogStatuses.none.value)
