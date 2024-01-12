@@ -10,4 +10,5 @@ from .db_functions import (
     get_role,
     set_dialog_status,
     set_main_message_id,
+    set_poll_type,
 )

@@ -17,3 +17,15 @@ accept_kb = [
      InlineKeyboardButton(text=ButtonsText.no.value, callback_data=CallBacks.reject.value)]
 ]
 accept_mk = InlineKeyboardMarkup(inline_keyboard=accept_kb)
+
+# def back_mk_generator(clbck):
+#     back_kb = [
+#         [InlineKeyboardButton(text=ButtonsText.back.value, callback_data=clbck)]
+#     ]
+#     return InlineKeyboardMarkup(inline_keyboard=back_kb)
+# reply_markup=common_keyboards.back_mk_generator(f'{CallBacks.poll_id_prefix.value}{CallBacks.prefix_divider.value}{clbck_data}'
+
+back_kb = [
+    [InlineKeyboardButton(text=ButtonsText.back.value, callback_data=CallBacks.reject.value)]
+]
+back_mk = InlineKeyboardMarkup(inline_keyboard=back_kb)

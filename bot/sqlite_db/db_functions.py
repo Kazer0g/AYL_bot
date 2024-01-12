@@ -90,6 +90,20 @@ def get_poll_name(poll_id):
     )
     return cursor.fetchall()[0][0]
 
+def get_poll_type(poll_id):
+    cursor.execute(
+        'SELECT poll_type FROM polls WHERE poll_id = ?',
+        (poll_id,)
+    )
+    return cursor.fetchall()[0][0]
+
+def set_poll_type(poll_id, poll_type):
+    cursor.execute(
+        'UPDATE polls SET poll_type = ? WHERE poll_id = ?',
+        (poll_type, poll_id)
+    )
+    conn.commit()
+
 def delete_poll(poll_id):
     cursor.execute(
         'DELETE FROM polls WHERE poll_id = ?',

@@ -10,7 +10,7 @@ from sqlite_db import db_functions
 
 main_menu_kb = [
     [InlineKeyboardButton(text=ButtonsText.presenters.value, callback_data=CallBacks.presenters.value)],
-    [InlineKeyboardButton(text=ButtonsText.send_poll.value, callback_data=CallBacks.polls.value)],
+    [InlineKeyboardButton(text=ButtonsText.polls.value, callback_data=CallBacks.polls.value)],
     [InlineKeyboardButton(text=ButtonsText.feedback.value, callback_data=CallBacks.feedback.value)]
 ]
 main_menu_mk = InlineKeyboardMarkup(inline_keyboard=main_menu_kb)
@@ -62,9 +62,11 @@ def poll_list_mk_generator (poll_id):
     poll_list = [
         [InlineKeyboardButton(text=ButtonsText.main_menu.value, callback_data=CallBacks.main_menu.value),
         InlineKeyboardButton(text=ButtonsText.polls.value, callback_data=CallBacks.polls.value)],
+        [InlineKeyboardButton(text=db_functions.get_poll_name(poll_id=poll_id), callback_data=f'{CallBacks.poll_name_prefix.value}{CallBacks.prefix_divider.value}{poll_id}'),
+         InlineKeyboardButton(text=db_functions.get_poll_type(poll_id=poll_id), callback_data=f'{CallBacks.poll_type_prefix.value}{CallBacks.prefix_divider.value}{poll_id}')],
         [InlineKeyboardButton(text=ButtonsText.delete.value, callback_data=f'{CallBacks.delete_poll_prefix.value}{CallBacks.prefix_divider.value}{poll_id}'),
          InlineKeyboardButton(text=ButtonsText.send_poll.value, callback_data=f'{CallBacks.send_poll.value}{CallBacks.prefix_divider.value}{poll_id}')],
-        [InlineKeyboardButton(text=ButtonsText.add_question.value, callback_data=CallBacks.add_question.value)],
+        [InlineKeyboardButton(text=ButtonsText.add_question.value, callback_data=f'{CallBacks.add_question_prefix.value}{CallBacks.prefix_divider.value}{poll_id}')],
     ]
     # for poll_id in polls:
     #     user_id = staff_id[0]
@@ -79,3 +81,13 @@ def poll_list_mk_generator (poll_id):
          InlineKeyboardButton(text='>', callback_data='next')]
     )
     return InlineKeyboardMarkup(inline_keyboard=poll_list)
+
+poll_types_kb = [
+    [InlineKeyboardButton(text=ButtonsText.thread_1.value, callback_data=f'{CallBacks.thread_prefix.value}{CallBacks.prefix_divider.value}{CallBacks.thread_1.value}'),
+     InlineKeyboardButton(text=ButtonsText.thread_2.value, callback_data=f'{CallBacks.thread_prefix.value}{CallBacks.prefix_divider.value}{CallBacks.thread_2.value}'),
+     InlineKeyboardButton(text=ButtonsText.thread_3.value, callback_data=f'{CallBacks.thread_prefix.value}{CallBacks.prefix_divider.value}{CallBacks.thread_3.value}')],
+    [InlineKeyboardButton(text=ButtonsText.thread_junior.value, callback_data=f'{CallBacks.thread_prefix.value}{CallBacks.prefix_divider.value}{CallBacks.thread_junior.value}'),
+     InlineKeyboardButton(text=ButtonsText.thread_global.value, callback_data=f'{CallBacks.thread_prefix.value}{CallBacks.prefix_divider.value}{CallBacks.thread_global.value}')],
+     [InlineKeyboardButton(text=ButtonsText.back.value, callback_data=CallBacks.reject.value)]
+]
+poll_types_mk = InlineKeyboardMarkup(inline_keyboard=poll_types_kb)
