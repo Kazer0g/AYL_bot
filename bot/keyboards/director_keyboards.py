@@ -57,8 +57,8 @@ def polls_list_mk_generator ():
     return InlineKeyboardMarkup(inline_keyboard=polls_list)
 
 def poll_list_mk_generator (poll_id):
-    # polls = db_functions.get_polls()
-    # print (polls)
+    questions = db_functions.get_questions(poll_id=poll_id)
+    print (questions)
     poll_list = [
         [InlineKeyboardButton(text=ButtonsText.main_menu.value, callback_data=CallBacks.main_menu.value),
         InlineKeyboardButton(text=ButtonsText.polls.value, callback_data=CallBacks.polls.value)],
@@ -68,13 +68,15 @@ def poll_list_mk_generator (poll_id):
          InlineKeyboardButton(text=ButtonsText.send_poll.value, callback_data=f'{CallBacks.send_poll.value}{CallBacks.prefix_divider.value}{poll_id}')],
         [InlineKeyboardButton(text=ButtonsText.add_question.value, callback_data=f'{CallBacks.add_question_prefix.value}{CallBacks.prefix_divider.value}{poll_id}')],
     ]
-    # for poll_id in polls:
-    #     user_id = staff_id[0]
-    #     username = db_functions.get_username(user_id=user_id)
-    #     role = db_functions.get_role(user_id=user_id)
-    #     staff_list.append([InlineKeyboardButton(text=username, callback_data=f'{CallBacks.username_prefix.value}{CallBacks.prefix_divider.value}{username}'),
-    #                        InlineKeyboardButton(text=role, callback_data=f'{CallBacks.role_prefix.value}{CallBacks.prefix_divider.value}{role}{CallBacks.data_divider.value}{username}'),
-    #                        InlineKeyboardButton(text='-', callback_data=f'{CallBacks.delete_prefix.value}{CallBacks.prefix_divider.value}{username}')])
+    for question_id_db in questions:
+        question_id = question_id_db[0]
+        question = db_functions.get_question(question_id=question_id)
+        
+        poll_list.append(
+            [InlineKeyboardButton(text=question, callback_data=f'{CallBacks.question_prefix.value}{CallBacks.prefix_divider.value}{question_id}'),
+             InlineKeyboardButton(text=ButtonsText.delete.value, callback_data=f'{CallBacks.delete_question_prefix.value}{CallBacks.prefix_divider.value}{question_id}')]
+        )
+    
     poll_list.append(
         [InlineKeyboardButton(text="<", callback_data="previous"), 
          InlineKeyboardButton(text='&&&', callback_data='page'),
@@ -91,3 +93,10 @@ poll_types_kb = [
      [InlineKeyboardButton(text=ButtonsText.back.value, callback_data=CallBacks.reject.value)]
 ]
 poll_types_mk = InlineKeyboardMarkup(inline_keyboard=poll_types_kb)
+
+# question_types_kb = [
+#     [InlineKeyboardButton(text=ButtonsText.question_type_text.value, callback_data=)],
+#     [InlineKeyboardButton(text=ButtonsText.question_type_1_5.value, callback_data=),
+#      InlineKeyboardButton(text=ButtonsText.question_type_1_10.value, callback_data=)]
+# ]
+# question_types_mk = InlineKeyboardMarkup(inline_keyboard=question_types_kb)

@@ -17,6 +17,8 @@ from sqlite_db import (
     set_main_message_id,
     set_poll_type,
     set_poll_name,
+    add_question,
+    set_question,
 )
 
 # from validators import
@@ -76,16 +78,6 @@ async def presenters_reply_handler(clbck: CallbackQuery):
     staff_list_mk = director_keyboards.staff_list_mk_generator()
     await clbck.message.edit_reply_markup(reply_markup=staff_list_mk)
 
-# @router.callback_query(F.data == CallBacks.thread_1_prefix.value)
-# async def thread_1_reply_handler(clbck: CallbackQuery):
-#     poll_id = get_dialog_status(user_id=clbck.from_user.id).split(CallBacks.prefix_divider.value)[1]
-#     set_poll_type(poll_id=poll_id, poll_type=Statuses.thread_1.value)
-#     await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(clbck.from_user.id))
-#     try:
-#         await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=poll_id))
-#     except:
-#         pass
-#     set_dialog_status(user_id=clbck.from_user.id, dialog_status=DialogStatuses.none.value)
 
 @router.callback_query(F.data == CallBacks.accept.value)
 async def accepr_reply_handler (clbck: CallbackQuery):
@@ -144,7 +136,8 @@ async def custom_reply_handler(clbck: CallbackQuery):
                 
                 case CallBacks.add_question_prefix.value:
                     await clbck.message.answer(text=texts.ADD_QUESTION, reply_markup=common_keyboards.back_mk)
-                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=clbck.data)
+                    question_id = add_question(clbck_data)
+                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{CallBacks.set_question_prefix.value}{CallBacks.prefix_divider.value}{question_id}')
 
                 case CallBacks.thread_prefix.value:
                     poll_id = get_dialog_status(user_id=clbck.from_user.id).split(CallBacks.prefix_divider.value)[1]
@@ -175,8 +168,8 @@ async def message_handler(msg: Message):
         case Roles.director.value:
             dialog_prefix, dialog_data = get_dialog_status(user_id=msg.from_user.id).split(CallBacks.prefix_divider.value)
             match dialog_prefix:
-                case CallBacks.add_question_prefix.value:
-                    question = msg.text
+                case CallBacks.set_question_prefix.value:
+                    set_question(question_id=dialog_data, question=msg.text)
                     await msg.answer(text=texts.SELECT_QUESTION_TYPE, reply_markup=common_keyboards.back_mk)
                 case CallBacks.poll_name_prefix.value:
                     set_poll_name(poll_id=dialog_data, poll_name=msg.text)

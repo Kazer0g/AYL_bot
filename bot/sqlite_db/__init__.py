@@ -12,4 +12,7 @@ from .db_functions import (
     set_main_message_id,
     set_poll_type,
     set_poll_name,
+    add_question,
+    set_question,
+    get_question,
 )

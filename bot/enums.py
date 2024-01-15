@@ -13,6 +13,9 @@ class CallBacks (Enum):
     add_person = 'add_person'
     add_poll = 'add_poll'
     add_question_prefix = 'add_question'
+    set_question_prefix = 'set_question'
+    delete_question_prefix = 'delete_question'
+    question_prefix = 'question'
 
     username_prefix = 'username'
     role_prefix = 'role'
@@ -84,3 +87,7 @@ class ButtonsText(Enum):
     thread_3 = '3 поток'
     thread_junior = 'Юниорская'
     thread_global = 'Глобальная'
+
+    question_type_text = 'Текстовый'
+    question_type_1_5 = '1-5'
+    question_type_1_10 = '1-10'
