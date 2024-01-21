@@ -1,4 +1,3 @@
-import logging
 import sqlite3
 from enums import Statuses
 from .db_functions import connect_db
@@ -12,14 +11,12 @@ def add_user (username, user_id, role):
             (username, user_id, Statuses.status_active.value, role, role)
         )
         conn.commit()
-        logging.info (f'Added username:{username}, user_id:{user_id}')
         return role
     except sqlite3.IntegrityError:
         cursor.execute(
             'UPDATE users SET status = ? WHERE user_id = ?', 
             (Statuses.status_active.value, user_id)
         )
-        logging.info(f'Record with username:{username} and user_id:{user_id} is already exists, status = active')
 
         cursor.execute(
             'SELECT conference_role FROM users WHERE user_id = ?',
@@ -76,7 +73,6 @@ def set_dialog_status(user_id, dialog_status):
     )
     conn.commit()
     username = get_username(user_id=user_id)
-    logging.info(f'{username} dialog status changed: {dialog_status}')
 
 def get_main_message_id (user_id):
     cursor.execute(

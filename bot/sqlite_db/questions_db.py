@@ -1,5 +1,3 @@
-import logging
-import sqlite3
 from enums import Statuses
 from .db_functions import connect_db
 
@@ -14,7 +12,6 @@ def add_question(poll_id):
         'SELECT last_insert_rowid()',
     )
     question_id = cursor.fetchall()[0][0]
-    logging.info(f'Added question to poll id:{poll_id}, question id:{question_id}')
     conn.commit()
     return question_id
 

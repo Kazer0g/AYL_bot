@@ -1,5 +1,3 @@
-import logging
-import sqlite3
 from enums import Statuses
 from .db_functions import connect_db
 
