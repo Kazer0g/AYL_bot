@@ -11,7 +11,7 @@ from sqlite_db import connect_db
 
 
 async def main():
-    connect_db('bot/sqlite_db/db.db')
+    connect_db()
 
     bot = Bot(token=src.BOT_TOKEN, parse_mode=ParseMode.HTML)
     dp = Dispatcher(storage=MemoryStorage())
