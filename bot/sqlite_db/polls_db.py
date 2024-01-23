@@ -1,4 +1,3 @@
-from enums import Statuses
 from .db_functions import connect_db
 
 conn, cursor = connect_db()

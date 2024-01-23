@@ -1,17 +1,18 @@
 import sqlite3
+from webbrowser import get
 from enums import Statuses
 from .db_functions import connect_db
 
 conn, cursor = connect_db()
 
-def add_user (username, user_id, role):
+def add_user (username, user_id):
     try:
         cursor.execute(
-            'INSERT INTO users (username, user_id, status, conference_role, static_role) VALUES (?, ?, ?, ?, ?)',
-            (username, user_id, Statuses.status_active.value, role, role)
+            'INSERT INTO users (username, user_id) VALUES (?, ?)',
+            (username, user_id)
         )
         conn.commit()
-        return role
+        return get_role(user_id=user_id)
     except sqlite3.IntegrityError:
         cursor.execute(
             'UPDATE users SET status = ? WHERE user_id = ?', 
@@ -59,7 +60,7 @@ def get_staff():
         'SELECT user_id FROM users WHERE conference_status = "active" AND conference_role != "delegate" AND conference_role != "director"'    )
     return cursor.fetchall()
 
-def get_dialog_status(user_id):
+def get_dialog_status(user_id) -> str:
     cursor.execute(
         'SELECT dialog_status FROM users WHERE user_id = ?',
         (user_id,)    

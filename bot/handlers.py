@@ -1,3 +1,6 @@
+from ast import Call
+import logging
+import aiogram
 import texts
 from aiogram import F, Router, exceptions
 from aiogram.filters import Command
@@ -19,11 +22,15 @@ from sqlite_db import (
     set_poll_name,
     add_question,
     set_question,
+    delete_question,
+    set_question_type,
+    get_poll_id,
 )
 
 # from validators import
 
 router = Router()
+
 
 async def message_deleter(msg: Message, main_message_id):
     try:
@@ -34,20 +41,20 @@ async def message_deleter(msg: Message, main_message_id):
                 except:
                     pass
                 message_id -= 1
-    except exceptions.TelegramBadRequest:
-        message_deleter(msg)
+    except:
+        message_deleter(msg, main_message_id)
 
 @router.message(Command("start"))
 async def start_handler(msg: Message):
     set_main_message_id(user_id=msg.from_user.id, message_id=msg.message_id)
     await msg.bot.delete_message(chat_id=msg.chat.id, message_id=msg.message_id)
-    role = add_user(user_id=msg.from_user.id, username=msg.from_user.username, role=Roles.delegate.value)
+    role = add_user(user_id=msg.from_user.id, username=msg.from_user.username)
     match role:
         case Roles.delegate.value:
-            pass
+            await msg.answer(texts.GREETINGS_FOR_DELEGATE)
         case Roles.director.value:
             await msg.answer(texts.GREETINGS_FOR_DIRECTOR, reply_markup=common_keyboards.main_menu_mk)
-    set_dialog_status(user_id=msg.from_user.id, dialog_status=DialogStatuses.none.value)
+    set_dialog_status(user_id=msg.from_user.id, dialog_status=DialogStatuses.start.value)
 
 @router.callback_query(F.data == CallBacks.main_menu.value)
 async def main_menu_reply_handler(clbck: CallbackQuery):
@@ -58,12 +65,14 @@ async def main_menu_reply_handler(clbck: CallbackQuery):
         case Roles.director.value:
             await clbck.message.edit_text(text=MenuTexts.main_menu.value)
             await clbck.message.edit_reply_markup(reply_markup=director_keyboards.main_menu_mk)
+    set_dialog_status(user_id=clbck.from_user.id, dialog_status=DialogStatuses.main_menu.value)
 
 @router.callback_query(F.data == CallBacks.polls.value)
 async def send_poll_reply_handler(clbck: CallbackQuery):
     await clbck.message.edit_text(text=MenuTexts.polls.value)
     polls_list_mk = director_keyboards.polls_list_mk_generator()
     await clbck.message.edit_reply_markup(reply_markup=polls_list_mk)
+    set_dialog_status(user_id=clbck.from_user.id, dialog_status=DialogStatuses.polls.value)
 
 @router.callback_query(F.data == CallBacks.add_poll.value)
 async def add_poll_reply_handler(clbck: CallbackQuery):
@@ -71,12 +80,43 @@ async def add_poll_reply_handler(clbck: CallbackQuery):
     await clbck.message.edit_text(text=f'{get_poll_name(poll_id=poll_id)} id:{poll_id}')
     poll_list_mk = director_keyboards.poll_list_mk_generator(poll_id=poll_id)
     await clbck.message.edit_reply_markup(reply_markup=poll_list_mk)
+    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{poll_id}')
+    
+@router.callback_query(F.data == CallBacks.poll_name.value)
+async def poll_name_reply_handler(clbck: CallbackQuery):
+    await clbck.message.answer(text=texts.WRITE_POLL_NAME, reply_markup=common_keyboards.back_mk)
+    dialog_status = get_dialog_status(user_id=clbck.from_user.id)
+    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll_name.value}{DialogStatuses.divider.value}{dialog_status}')
 
+@router.callback_query(F.data == CallBacks.poll_type.value)
+async def poll_type_reply_handler(clbck: CallbackQuery):
+    await clbck.message.answer(text=texts.SELECT_QUESTION_TYPE, reply_markup=director_keyboards.poll_types_mk)
+    dialog_status = get_dialog_status(user_id=clbck.from_user.id)
+    set_dialog_status(user_id=clbck.from_user.id, dialog_status=dialog_status)
+    
+
+@router.callback_query(F.data == CallBacks.add_question.value)
+async def add_question_reply_handler(clbck: CallbackQuery):
+    await clbck.message.answer(text=texts.ADD_QUESTION, reply_markup=common_keyboards.back_mk)
+    question_id = add_question(poll_id=get_dialog_status(user_id=clbck.from_user.id).split(DialogStatuses.divider.value)[1])
+    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.set_question.value}{DialogStatuses.divider.value}{DialogStatuses.question.value}{DialogStatuses.divider.value}{question_id}')
+
+
+@router.callback_query(F.data == CallBacks.delete.value)
+async def delete_reply_handler(clbck: CallbackQuery):
+    dialog_status = get_dialog_status(user_id=clbck.from_user.id)
+    object_name, object_id = dialog_status.split(DialogStatuses.divider.value)
+    match object_name:
+        case DialogStatuses.poll.value:
+            await clbck.message.answer(text=texts.delete_from_polls_message_generator(poll_name=get_poll_name(poll_id=object_id)), reply_markup=common_keyboards.accept_mk)
+            set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.delete.value}{DialogStatuses.divider.value}{dialog_status}')
+            
 @router.callback_query(F.data == CallBacks.presenters.value)
 async def presenters_reply_handler(clbck: CallbackQuery):
     await clbck.message.edit_text(text=MenuTexts.presenters.value)
     staff_list_mk = director_keyboards.staff_list_mk_generator()
     await clbck.message.edit_reply_markup(reply_markup=staff_list_mk)
+    set_dialog_status(user_id=clbck.from_user.id, dialog_status=DialogStatuses.presenters.value)
 
 
 @router.callback_query(F.data == CallBacks.accept.value)
@@ -86,13 +126,17 @@ async def accepr_reply_handler (clbck: CallbackQuery):
         case Roles.delegate.value:
             pass
         case Roles.director.value:
-            dialog_prefix, dialog_data = get_dialog_status(user_id=clbck.from_user.id).split(CallBacks.prefix_divider.value)
+            dialog_prefix, object_name, object_id = get_dialog_status(user_id=clbck.from_user.id).split(DialogStatuses.divider.value)
             match dialog_prefix:
-                case CallBacks.delete_poll_prefix.value:
-                    delete_poll(poll_id=dialog_data)
-                    await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(clbck.from_user.id))
-                    await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.polls_list_mk_generator())
-                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=DialogStatuses.none.value)
+                case DialogStatuses.delete.value:
+                    match object_name:
+                        case DialogStatuses.poll.value:
+                            delete_poll(poll_id=object_id)
+                            await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(clbck.from_user.id))
+                            await clbck.bot.edit_message_text(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), text=MenuTexts.polls.value)
+                            await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.polls_list_mk_generator())
+                            set_dialog_status(user_id=clbck.from_user.id, dialog_status=DialogStatuses.polls.value)
+                    
 
 @router.callback_query(F.data == CallBacks.reject.value)
 async def accept_reply_handler (clbck: CallbackQuery):
@@ -101,8 +145,14 @@ async def accept_reply_handler (clbck: CallbackQuery):
         case Roles.delegate.value:
             pass
         case Roles.director.value:
-            await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(user_id=clbck.from_user.id)) 
-            set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.none.value}')   
+            dialog_prefix, object_name, object_id = get_dialog_status(user_id=clbck.from_user.id).split(DialogStatuses.divider.value)
+            match dialog_prefix:
+                case DialogStatuses.set_question.value | DialogStatuses.set_question_type.value :
+                    poll_id = delete_question(question_id=object_id)
+                    await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(user_id=clbck.from_user.id)) 
+                    await clbck.bot.edit_message_text(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), text=f'{get_poll_name(poll_id=poll_id)} id:{poll_id}')
+                    await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=poll_id))
+                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{poll_id}') 
 
 @router.callback_query(F.data == F.data)
 async def custom_reply_handler(clbck: CallbackQuery):
@@ -111,37 +161,22 @@ async def custom_reply_handler(clbck: CallbackQuery):
         case Roles.delegate.value:
             pass
         case Roles.director.value:
-            clbck_prefix, clbck_data = clbck.data.split(CallBacks.prefix_divider.value)
-            match clbck_prefix:
+            object_name, object_id = clbck.data.split(CallBacks.prefix_divider.value)
+            match object_name:
                 
                 case CallBacks.delete_stuff_prefix.value:
-                    await clbck.message.answer(text=texts.delete_from_stuff_message_generator(username=clbck_data, role=Roles.delegate.value), reply_markup=common_keyboards.accept_mk)
+                    await clbck.message.answer(text=texts.delete_from_stuff_message_generator(username=object_id, role=Roles.delegate.value), reply_markup=common_keyboards.accept_mk)
                     set_dialog_status(user_id=clbck.from_user.id, dialog_status=clbck.data)
                 
-                case CallBacks.poll_id_prefix.value:
-                    await clbck.message.edit_text(text=f'{MenuTexts.poll.value} id:{clbck_data}')
-                    await clbck.message.edit_reply_markup(reply_markup=director_keyboards.poll_list_mk_generator(poll_id=clbck_data))
-                
-                case CallBacks.poll_name_prefix.value:
-                    await clbck.message.answer(text=texts.WRITE_POLL_NAME, reply_markup=common_keyboards.back_mk)
+                case DialogStatuses.poll.value:
+                    await clbck.message.edit_text(text=f'{get_poll_name(poll_id=object_id)} id:{object_id}')
+                    await clbck.message.edit_reply_markup(reply_markup=director_keyboards.poll_list_mk_generator(poll_id=object_id))
                     set_dialog_status(user_id=clbck.from_user.id, dialog_status=clbck.data)
-                
-                case CallBacks.poll_type_prefix.value:
-                    await clbck.message.answer(text=texts.SELECT_QUESTION_TYPE, reply_markup=director_keyboards.poll_types_mk)
-                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=clbck.data)
-                
-                case CallBacks.delete_poll_prefix.value:
-                    await clbck.message.answer(text=texts.delete_from_polls_message_generator(poll_name=clbck_data), reply_markup=common_keyboards.accept_mk)
-                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=clbck.data)
-                
-                case CallBacks.add_question_prefix.value:
-                    await clbck.message.answer(text=texts.ADD_QUESTION, reply_markup=common_keyboards.back_mk)
-                    question_id = add_question(clbck_data)
-                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{CallBacks.set_question_prefix.value}{CallBacks.prefix_divider.value}{question_id}')
-
+                    
                 case CallBacks.thread_prefix.value:
-                    poll_id = get_dialog_status(user_id=clbck.from_user.id).split(CallBacks.prefix_divider.value)[1]
-                    match clbck_data:
+                    dialog_status = get_dialog_status(user_id=clbck.from_user.id)
+                    poll_id = dialog_status.split(DialogStatuses.divider.value)[1]
+                    match object_id:
                         case CallBacks.thread_1.value:
                             set_poll_type(poll_id=poll_id, poll_type=Statuses.thread_1.value)
                         case CallBacks.thread_2.value:
@@ -157,7 +192,24 @@ async def custom_reply_handler(clbck: CallbackQuery):
                         await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=poll_id))
                     except:
                         pass
-                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=DialogStatuses.none.value)
+                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=dialog_status)
+                    
+                case CallBacks.set_question_type.value:
+                    dialog_status = get_dialog_status(user_id=clbck.from_user.id)
+                    question_id = dialog_status.split(DialogStatuses.divider.value)[2]
+                    poll_id = get_poll_id(question_id=question_id)
+                    match object_id:
+                        case CallBacks.question_type_text.value:
+                            set_question_type(question_id=question_id, question_type=Statuses.type_text.value)
+                        case CallBacks.question_type_1_5.value:
+                            set_question_type(question_id=question_id, question_type=Statuses.type_1_5.value)
+                        case CallBacks.question_type_1_10.value:
+                            set_question_type(question_id=question_id, question_type=Statuses.type_1_10.value)
+                    await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(clbck.from_user.id))
+                    
+                case _:
+                    logging.warning(f'Empty handler callback:{clbck.data}')
+                            
 
 @router.message()
 async def message_handler(msg: Message):
@@ -166,16 +218,18 @@ async def message_handler(msg: Message):
         case Roles.delegate.value:
             pass
         case Roles.director.value:
-            dialog_prefix, dialog_data = get_dialog_status(user_id=msg.from_user.id).split(CallBacks.prefix_divider.value)
+            dialog_prefix, object_name, object_id = get_dialog_status(user_id=msg.from_user.id).split(CallBacks.prefix_divider.value)
             match dialog_prefix:
                 case CallBacks.set_question_prefix.value:
-                    set_question(question_id=dialog_data, question=msg.text)
-                    await msg.answer(text=texts.SELECT_QUESTION_TYPE, reply_markup=common_keyboards.back_mk)
-                case CallBacks.poll_name_prefix.value:
-                    set_poll_name(poll_id=dialog_data, poll_name=msg.text)
+                    set_question(question_id=object_id, question=msg.text)
+                    await msg.answer(text=texts.SELECT_QUESTION_TYPE, reply_markup=director_keyboards.question_types_mk)
+                    set_dialog_status(user_id=msg.from_user.id, dialog_status=f'{DialogStatuses.set_question_type.value}{DialogStatuses.divider.value}{object_name}{DialogStatuses.divider.value}{object_id}')
+                case DialogStatuses.poll_name.value:
+                    set_poll_name(poll_id=object_id, poll_name=msg.text)
                     await message_deleter(msg=msg, main_message_id=get_main_message_id(msg.from_user.id))
                     try:
-                        await msg.bot.edit_message_reply_markup(chat_id=msg.chat.id, message_id=get_main_message_id(msg.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=dialog_data))
+                        await msg.bot.edit_message_text(chat_id=msg.chat.id, message_id=get_main_message_id(msg.from_user.id), text=f'{get_poll_name(poll_id=object_id)} id:{object_id}')
+                        await msg.bot.edit_message_reply_markup(chat_id=msg.chat.id, message_id=get_main_message_id(msg.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=object_id))
                     except:
                         pass
-                    set_dialog_status(user_id=msg.from_user.id, dialog_status=DialogStatuses.none.value)
+                    set_dialog_status(user_id=msg.from_user.id, dialog_status=f'{object_name}{DialogStatuses.divider.value}{object_id}')

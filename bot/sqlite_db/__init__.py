@@ -19,4 +19,4 @@ from .polls_db import (
     set_poll_type,
     delete_poll,
 )
-from .questions_db import add_question, get_question, get_questions, set_question
+from .questions_db import add_question, delete_question, get_question, get_questions, set_question, set_question_type, get_poll_id
