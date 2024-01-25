@@ -7,7 +7,7 @@ from aiogram.types import (
 )
 from enums import ButtonsText, CallBacks
 from enums import DialogStatuses
-from sqlite_db import users_db, polls_db, questions_db
+from sqlite_db import users_db, polls_db, questions_db, get_question, get_question_type
 
 main_menu_kb = [
     [InlineKeyboardButton(text=ButtonsText.presenters.value, callback_data=CallBacks.presenters.value)],
@@ -73,9 +73,9 @@ def poll_list_mk_generator (poll_id):
         question = questions_db.get_question(question_id=question_id)
         
         poll_list.append(
-            [InlineKeyboardButton(text=question, callback_data=f'{CallBacks.question_prefix.value}{CallBacks.prefix_divider.value}{question_id}'),
-             InlineKeyboardButton(text=ButtonsText.delete.value, callback_data=f'{CallBacks.delete_question_prefix.value}{CallBacks.prefix_divider.value}{question_id}')]
+            [InlineKeyboardButton(text=question, callback_data=f'{CallBacks.question.value}{CallBacks.divider.value}{question_id}')]
         )
+        # InlineKeyboardButton(text=ButtonsText.delete.value, callback_data=CallBacks.delete.value)
     
     poll_list.append(
         [InlineKeyboardButton(text="<", callback_data="previous"), 
@@ -83,6 +83,17 @@ def poll_list_mk_generator (poll_id):
          InlineKeyboardButton(text='>', callback_data='next')]
     )
     return InlineKeyboardMarkup(inline_keyboard=poll_list)
+
+def question_list_mk_generator (question_id):
+    question_list_kb = [
+        [InlineKeyboardButton(text=ButtonsText.change_question.value, callback_data=CallBacks.change_question.value),
+         InlineKeyboardButton(text=get_question_type(question_id = question_id), callback_data=CallBacks.change_question_type.value)],
+        [InlineKeyboardButton(text=ButtonsText.back.value, callback_data=f'{CallBacks.poll.value}{CallBacks.divider.value}{questions_db.get_poll_id(question_id=question_id)}'),
+         InlineKeyboardButton(text=ButtonsText.delete.value, callback_data=CallBacks.delete.value)],
+        [InlineKeyboardButton(text=ButtonsText.main_menu.value, callback_data=CallBacks.main_menu.value)]
+    ]
+    
+    return InlineKeyboardMarkup(inline_keyboard=question_list_kb)
 
 poll_types_kb = [
     [InlineKeyboardButton(text=ButtonsText.thread_1.value, callback_data=f'{CallBacks.thread_prefix.value}{CallBacks.divider.value}{CallBacks.thread_1.value}'),

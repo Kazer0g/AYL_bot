@@ -16,10 +16,12 @@ class ButtonsText(Enum):
     add_poll = 'Добавить анкету'
     add_question = 'Добавить вопрос'
 
-    back = 'back'
+    back = 'Назад'
 
     yes = 'Да'
     no = 'Нет'
+    
+    change_question = 'Изменить вопрос'
 
     main_menu = 'В главное меню'
     delete = '-'

@@ -8,6 +8,8 @@ class CallBacks (Enum):
     question_type_text = 'question_type_text'
     question_type_1_5 = 'question_type_1_5'
     question_type_1_10 = 'question_type1_10'
+    change_question = 'change_question'
+    change_question_type = 'change_question_type'
 
     main_menu = 'main_menu'
     presenters = 'presenters'
@@ -27,6 +29,7 @@ class CallBacks (Enum):
     username_prefix = 'username'
     role_prefix = 'role'
     delete_stuff_prefix = 'delete_stuff'
+    
 
     poll_id_prefix = 'poll_id'
     poll_name_prefix = 'poll_name'
@@ -35,6 +38,7 @@ class CallBacks (Enum):
     
     delete = 'delete'
     poll = 'poll'
+    question = 'question'
 
     thread_prefix = 'thraed'
     thread_1 = 'thread_1'

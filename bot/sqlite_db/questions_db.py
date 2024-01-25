@@ -22,8 +22,14 @@ def get_question(question_id):
     )
     return cursor.fetchall()[0][0]
 
+def get_question_type(question_id):
+    cursor.execute(
+        'SELECT type FROM questions WHERE question_id = ?',
+        (question_id,)
+    )
+    return cursor.fetchall()[0][0]
+
 def get_poll_id (question_id):
-    print (question_id)
     cursor.execute(
         'SELECT poll_id FROM questions WHERE question_id = ?',
         (question_id,)
@@ -53,10 +59,11 @@ def set_question_type(question_id, question_type):
     
     
 def delete_question(question_id):
+    poll_id = get_poll_id(question_id=question_id)
     cursor.execute(
         'DELETE FROM questions WHERE question_id = ?',
         (question_id,)
     )
     conn.commit()
-    return get_poll_id(question_id=question_id)
+    return poll_id
     
