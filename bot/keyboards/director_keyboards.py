@@ -86,8 +86,8 @@ def poll_list_mk_generator (poll_id):
 
 def question_list_mk_generator (question_id):
     question_list_kb = [
-        [InlineKeyboardButton(text=ButtonsText.change_question.value, callback_data=CallBacks.change_question.value),
-         InlineKeyboardButton(text=get_question_type(question_id = question_id), callback_data=CallBacks.change_question_type.value)],
+        [InlineKeyboardButton(text=ButtonsText.change_question.value, callback_data=f'{CallBacks.change_question.value}{CallBacks.divider.value}{questions_db.get_poll_id(question_id=question_id)}'),
+         InlineKeyboardButton(text=get_question_type(question_id = question_id), callback_data=f'{CallBacks.change_question_type.value}{CallBacks.divider.value}{questions_db.get_poll_id(question_id=question_id)}')],
         [InlineKeyboardButton(text=ButtonsText.back.value, callback_data=f'{CallBacks.poll.value}{CallBacks.divider.value}{questions_db.get_poll_id(question_id=question_id)}'),
          InlineKeyboardButton(text=ButtonsText.delete.value, callback_data=CallBacks.delete.value)],
         [InlineKeyboardButton(text=ButtonsText.main_menu.value, callback_data=CallBacks.main_menu.value)]
