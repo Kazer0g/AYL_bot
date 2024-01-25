@@ -1,4 +1,5 @@
 import logging
+from readline import replace_history_item
 import aiogram
 import texts
 from aiogram import F, Router, exceptions
@@ -99,8 +100,18 @@ async def add_question_reply_handler(clbck: CallbackQuery):
     await clbck.message.answer(text=texts.ADD_QUESTION, reply_markup=common_keyboards.back_mk)
     question_id = add_question(poll_id=get_dialog_status(user_id=clbck.from_user.id).split(DialogStatuses.divider.value)[1])
     set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.set_question.value}{DialogStatuses.divider.value}{DialogStatuses.question.value}{DialogStatuses.divider.value}{question_id}')
+    
+@router.callback_query(F.data == CallBacks.change_question.value)
+async def change_question_reply_handler(clbck: CallbackQuery):
+    await clbck.answer
 
-
+@router.callback_query(F.data == CallBacks.change_question_type.value)
+async def change_question_type_reply_handler(clbck: CallbackQuery):
+    dialog_status = get_dialog_status(user_id=clbck.from_user.id)
+    object_name, object_id = dialog_status.split(DialogStatuses.divider.value)
+    await clbck.message.answer(text=texts.SELECT_QUESTION_TYPE, reply_markup=director_keyboards.question_types_mk)
+    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.change_question_type.value}{DialogStatuses.divider.value}{object_name}{DialogStatuses.divider.value}{object_id}')
+    
 @router.callback_query(F.data == CallBacks.delete.value)
 async def delete_reply_handler(clbck: CallbackQuery):
     dialog_status = get_dialog_status(user_id=clbck.from_user.id)
@@ -155,12 +166,18 @@ async def accept_reply_handler (clbck: CallbackQuery):
         case Roles.director.value:
             dialog_prefix, object_name, object_id = get_dialog_status(user_id=clbck.from_user.id).split(DialogStatuses.divider.value)
             match dialog_prefix:
-                case DialogStatuses.set_question.value | DialogStatuses.set_question_type.value :
+                case DialogStatuses.set_question.value | DialogStatuses.set_question_type.value:
                     poll_id = delete_question(question_id=object_id)
                     await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(user_id=clbck.from_user.id)) 
                     await clbck.bot.edit_message_text(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), text=f'{get_poll_name(poll_id=poll_id)} id:{poll_id}')
                     await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=poll_id))
                     set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{poll_id}') 
+
+                case DialogStatuses.change_question_type.value:
+                    await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(user_id=clbck.from_user.id)) 
+                    await clbck.bot.edit_message_text(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), text=get_question(question_id=object_id))
+                    await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.question_list_mk_generator(question_id=object_id))
+                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.question.value}{DialogStatuses.divider.value}{object_id}') 
 
 @router.callback_query(F.data == F.data)
 async def custom_reply_handler(clbck: CallbackQuery):
@@ -209,6 +226,7 @@ async def custom_reply_handler(clbck: CallbackQuery):
 
                 case CallBacks.set_question_type.value:
                     dialog_status = get_dialog_status(user_id=clbck.from_user.id)
+                    dialog_prefix = dialog_status.split(DialogStatuses.divider.value)[0]
                     question_id = dialog_status.split(DialogStatuses.divider.value)[2]
                     poll_id = get_poll_id(question_id=question_id)
                     match object_id:
@@ -219,9 +237,13 @@ async def custom_reply_handler(clbck: CallbackQuery):
                         case CallBacks.question_type_1_10.value:
                             set_question_type(question_id=question_id, question_type=Statuses.type_1_10.value)
                     await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(clbck.from_user.id))
-                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{poll_id}')
-                    await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=poll_id))
-                    
+                    match dialog_prefix:
+                        case DialogStatuses.set_question_type.value:
+                            set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{poll_id}')
+                            await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=poll_id))
+                        case DialogStatuses.change_question_type.value:
+                            set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.question.value}{DialogStatuses.divider.value}{question_id}')
+                            await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.question_list_mk_generator(question_id=question_id))
                 case _:
                     logging.warning(f'Empty handler callback:{clbck.data}')
                             

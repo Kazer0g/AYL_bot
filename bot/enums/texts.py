@@ -16,6 +16,7 @@ class ButtonsText(Enum):
     add_poll = 'Добавить анкету'
     add_question = 'Добавить вопрос'
 
+    back_to_poll = 'К анкете'
     back = 'Назад'
 
     yes = 'Да'
