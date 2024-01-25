@@ -283,6 +283,24 @@ async def custom_reply_handler(clbck: CallbackQuery):
         case Roles.director.value:
             object_name, object_id = clbck.data.split(CallBacks.prefix_divider.value)
             match object_name:
+                case CallBacks.change_question.value:
+                    dstatus = get_dialog_status(user_id=clbck.from_user.id)
+                    dialog_prefix, question_id = dstatus.split(
+                        DialogStatuses.divider.value
+                    )
+                    await clbck.message.answer(
+                        text=texts.ADD_QUESTION, reply_markup=common_keyboards.back_mk
+                    )
+                    set_dialog_status(
+                        user_id=clbck.from_user.id,
+                        dialog_status=DialogStatuses.divider.value.join(
+                            [
+                                DialogStatuses.change_question.value,
+                                DialogStatuses.question.value,
+                                str(question_id),
+                            ]
+                        ),
+                    )
                 case CallBacks.change_question_type.value:
                     dstatus = get_dialog_status(user_id=clbck.from_user.id)
                     dialog_prefix, question_id = dstatus.split(
@@ -467,6 +485,29 @@ async def message_handler(msg: Message):
                         user_id=msg.from_user.id,
                         dialog_status=f"{DialogStatuses.set_question_type.value}{DialogStatuses.divider.value}{object_name}{DialogStatuses.divider.value}{object_id}",
                     )
+                case DialogStatuses.change_question.value:
+                    set_question(question_id=object_id, question=msg.text)
+                    await message_deleter(
+                        msg=msg,
+                        main_message_id=get_main_message_id(msg.from_user.id),
+                    )
+                    await msg.bot.edit_message_text(
+                        text=msg.text,
+                        chat_id=msg.chat.id,
+                        message_id=get_main_message_id(msg.from_user.id),
+                    )
+                    await msg.bot.edit_message_reply_markup(
+                        chat_id=msg.chat.id,
+                        message_id=get_main_message_id(msg.from_user.id),
+                        reply_markup=director_keyboards.question_list_mk_generator(
+                            question_id=object_id
+                        ),
+                    )
+                    set_dialog_status(
+                        user_id=msg.from_user.id,
+                        dialog_status=f"{object_name}{DialogStatuses.divider.value}{object_id}",
+                    )
+
                 case DialogStatuses.poll_name.value:
                     set_poll_name(poll_id=object_id, poll_name=msg.text)
                     await message_deleter(
