@@ -1,11 +1,11 @@
 import sqlite3
-from webbrowser import get
 from enums import Statuses
 from .db_functions import connect_db
 
 conn, cursor = connect_db()
 
-def add_user (username, user_id, mode):
+def add_user (user_id, mode, username):
+    print (user_id, username)
     try:
         cursor.execute(
             'INSERT INTO users (username, user_id, mode) VALUES (?, ?, ?)',

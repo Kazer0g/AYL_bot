@@ -10,6 +10,7 @@ class DialogStatuses(Enum):
     send_poll = 'send_poll'
     poll_name = 'change_poll_name'
     poll_type = 'change_poll_type'
+    answer = 'answer'
     
     question = 'question'
     set_question = 'set_question'

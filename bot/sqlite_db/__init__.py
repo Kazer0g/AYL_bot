@@ -30,3 +30,4 @@ from .questions_db import (
     get_poll_id,
     get_question_type,
 )
+from .answers_db import add_answer, get_answer

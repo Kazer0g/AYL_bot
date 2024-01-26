@@ -40,6 +40,7 @@ class CallBacks (Enum):
     poll = 'poll'
     question = 'question'
     
+    take = 'take'
     answer = 'answer'
 
     thread_prefix = 'thraed'
@@ -51,5 +52,6 @@ class CallBacks (Enum):
 
     prefix_divider = ':'
     divider = ':'
+    spliter = '-'
     
     data_divider = '-'
