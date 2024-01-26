@@ -13,6 +13,7 @@ class DialogStatuses(Enum):
     set_question = 'set_question'
     set_question_type = 'set_question_type'
     change_question_type = 'change_question_type'
+    change_question = 'change_question'
     delete = 'delete'
     presenters = 'presenters'
     divider = ':'

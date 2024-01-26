@@ -103,7 +103,10 @@ async def add_question_reply_handler(clbck: CallbackQuery):
     
 @router.callback_query(F.data == CallBacks.change_question.value)
 async def change_question_reply_handler(clbck: CallbackQuery):
-    await clbck.answer
+    dialog_status = get_dialog_status(user_id=clbck.from_user.id)
+    object_name, object_id = dialog_status.split(DialogStatuses.divider.value)
+    await clbck.message.answer(text=texts.ADD_QUESTION, reply_markup=common_keyboards.back_mk)
+    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.change_question.value}{DialogStatuses.divider.value}{DialogStatuses.question.value}{DialogStatuses.divider.value}{object_id}')    
 
 @router.callback_query(F.data == CallBacks.change_question_type.value)
 async def change_question_type_reply_handler(clbck: CallbackQuery):
@@ -173,7 +176,7 @@ async def accept_reply_handler (clbck: CallbackQuery):
                     await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=poll_id))
                     set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{poll_id}') 
 
-                case DialogStatuses.change_question_type.value:
+                case DialogStatuses.change_question_type.value | DialogStatuses.change_question.value:
                     await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(user_id=clbck.from_user.id)) 
                     await clbck.bot.edit_message_text(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), text=get_question(question_id=object_id))
                     await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.question_list_mk_generator(question_id=object_id))
@@ -261,6 +264,14 @@ async def message_handler(msg: Message):
                     set_question(question_id=object_id, question=msg.text)
                     await msg.answer(text=texts.SELECT_QUESTION_TYPE, reply_markup=director_keyboards.question_types_mk)
                     set_dialog_status(user_id=msg.from_user.id, dialog_status=f'{DialogStatuses.set_question_type.value}{DialogStatuses.divider.value}{object_name}{DialogStatuses.divider.value}{object_id}')
+                
+                case DialogStatuses.change_question.value:
+                    set_question(question_id=object_id, question=msg.text)
+                    await message_deleter(msg=msg, main_message_id=get_main_message_id(user_id=msg.from_user.id)) 
+                    await msg.bot.edit_message_text(chat_id=msg.chat.id, message_id=get_main_message_id(msg.from_user.id), text=get_question(question_id=object_id))
+                    await msg.bot.edit_message_reply_markup(chat_id=msg.chat.id, message_id=get_main_message_id(msg.from_user.id), reply_markup=director_keyboards.question_list_mk_generator(question_id=object_id))
+                    set_dialog_status(user_id=msg.from_user.id, dialog_status=f'{DialogStatuses.question.value}{DialogStatuses.divider.value}{object_id}')
+                
                 case DialogStatuses.poll_name.value:
                     set_poll_name(poll_id=object_id, poll_name=msg.text)
                     await message_deleter(msg=msg, main_message_id=get_main_message_id(msg.from_user.id))
