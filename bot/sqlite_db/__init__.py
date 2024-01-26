@@ -9,6 +9,7 @@ from .users_db import (
     get_main_message_id,
     set_dialog_status,
     set_main_message_id,
+    get_delegates,
 )
 from .polls_db import (
     add_poll,

@@ -65,7 +65,7 @@ def poll_list_mk_generator (poll_id):
         [InlineKeyboardButton(text=polls_db.get_poll_name(poll_id=poll_id), callback_data=CallBacks.poll_name.value),
          InlineKeyboardButton(text=polls_db.get_poll_type(poll_id=poll_id), callback_data=CallBacks.poll_type.value)],
         [InlineKeyboardButton(text=ButtonsText.delete.value, callback_data=CallBacks.delete.value),
-         InlineKeyboardButton(text=ButtonsText.send_poll.value, callback_data=f'{CallBacks.send_poll.value}{CallBacks.prefix_divider.value}{poll_id}')],
+         InlineKeyboardButton(text=ButtonsText.send_poll.value, callback_data=CallBacks.send_poll.value)],
         [InlineKeyboardButton(text=ButtonsText.add_question.value, callback_data=CallBacks.add_question.value)],
     ]
     for question_id_db in questions:

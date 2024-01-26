@@ -1,1 +1,1 @@
-from keyboards import common_keyboards, director_keyboards
+from keyboards import common_keyboards, director_keyboards, delegate_keyboards

@@ -7,8 +7,10 @@ class DialogStatuses(Enum):
     polls = 'polls'
     poll = 'poll'
     add_poll = 'add_poll'
+    send_poll = 'send_poll'
     poll_name = 'change_poll_name'
     poll_type = 'change_poll_type'
+    
     question = 'question'
     set_question = 'set_question'
     set_question_type = 'set_question_type'
@@ -17,6 +19,7 @@ class DialogStatuses(Enum):
     delete = 'delete'
     presenters = 'presenters'
     divider = ':'
+    
 
 class Statuses(Enum):
     

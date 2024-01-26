@@ -6,7 +6,7 @@ from aiogram import F, Router, exceptions
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from enums import CallBacks, DialogStatuses, MenuTexts, Roles, Statuses
-from keyboards import common_keyboards, director_keyboards
+from keyboards import common_keyboards, director_keyboards, delegate_keyboards
 from sqlite_db import (
     add_poll,
     add_user,
@@ -26,6 +26,8 @@ from sqlite_db import (
     set_question_type,
     get_poll_id,
     get_question,
+    get_poll_type,
+    get_delegates
 )
 
 # from validators import
@@ -49,10 +51,10 @@ async def message_deleter(msg: Message, main_message_id):
 async def start_handler(msg: Message):
     set_main_message_id(user_id=msg.from_user.id, message_id=msg.message_id)
     await msg.bot.delete_message(chat_id=msg.chat.id, message_id=msg.message_id)
-    role = add_user(user_id=msg.from_user.id, username=msg.from_user.username)
+    role = add_user(user_id=msg.from_user.id, username=msg.from_user.username, mode=Statuses.conference_mode.value)
     match role:
         case Roles.delegate.value:
-            await msg.answer(texts.GREETINGS_FOR_DELEGATE)
+            await msg.answer(texts.GREETINGS_FOR_DELEGATE, reply_markup=common_keyboards.main_menu_mk)
         case Roles.director.value:
             await msg.answer(texts.GREETINGS_FOR_DIRECTOR, reply_markup=common_keyboards.main_menu_mk)
     set_dialog_status(user_id=msg.from_user.id, dialog_status=DialogStatuses.start.value)
@@ -62,7 +64,7 @@ async def main_menu_reply_handler(clbck: CallbackQuery):
     role = get_role(user_id=clbck.from_user.id)
     match role:
         case Roles.delegate.value:
-            pass
+            await clbck.message.edit_text(text='Тут будут отображаться опросы')
         case Roles.director.value:
             await clbck.message.edit_text(text=MenuTexts.main_menu.value)
             await clbck.message.edit_reply_markup(reply_markup=director_keyboards.main_menu_mk)
@@ -94,6 +96,13 @@ async def poll_type_reply_handler(clbck: CallbackQuery):
     await clbck.message.answer(text=texts.SELECT_QUESTION_TYPE, reply_markup=director_keyboards.poll_types_mk)
     dialog_status = get_dialog_status(user_id=clbck.from_user.id)
     set_dialog_status(user_id=clbck.from_user.id, dialog_status=dialog_status)
+
+@router.callback_query(F.data == CallBacks.send_poll.value)
+async def sed_poll_reply_handler(clbck: CallbackQuery):
+    dialog_status = get_dialog_status(user_id=clbck.from_user.id)
+    object_name, object_id = dialog_status.split(DialogStatuses.divider.value)
+    await clbck.message.answer(text=texts.SEND_POLL, reply_markup=common_keyboards.accept_mk)
+    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.send_poll.value}{DialogStatuses.divider.value}{dialog_status}')
     
 @router.callback_query(F.data == CallBacks.add_question.value)
 async def add_question_reply_handler(clbck: CallbackQuery):
@@ -145,7 +154,7 @@ async def accepr_reply_handler (clbck: CallbackQuery):
             dialog_prefix, object_name, object_id = get_dialog_status(user_id=clbck.from_user.id).split(DialogStatuses.divider.value)
             match dialog_prefix:
                 case DialogStatuses.delete.value:
-                    match object_name:
+                    match object_name: 
                         case DialogStatuses.poll.value:
                             delete_poll(poll_id=object_id)
                             await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(clbck.from_user.id))
@@ -158,14 +167,23 @@ async def accepr_reply_handler (clbck: CallbackQuery):
                             await clbck.bot.edit_message_text(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), text=f'{get_poll_name(poll_id=poll_id)} id:{poll_id}')
                             await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=poll_id))
                             set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{poll_id}') 
+                case DialogStatuses.send_poll.value:
+                    poll_type = get_poll_type(poll_id=object_id)
+                    delegate_ids = get_delegates(thread=poll_type)
+                    for id in delegate_ids:
+                        await clbck.bot.send_message(chat_id=id[0], text=get_poll_name(poll_id=object_id), reply_markup=delegate_keyboards.answer_mk_generator(object_id))
+                    await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(user_id=clbck.from_user.id)) 
+                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{object_id}')
                     
-
+                    
 @router.callback_query(F.data == CallBacks.reject.value)
 async def accept_reply_handler (clbck: CallbackQuery):
     role = get_role(user_id=clbck.from_user.id)
     match role:
         case Roles.delegate.value:
-            pass
+            object_name, object_id = get_dialog_status(user_id=clbck.from_user.id).split(DialogStatuses.divider.value)
+            # await clbck.message.edit_text(text=)
+            # await clbck.message.edit_reply_markup(reply_markup=)
         case Roles.director.value:
             dialog_prefix, object_name, object_id = get_dialog_status(user_id=clbck.from_user.id).split(DialogStatuses.divider.value)
             match dialog_prefix:
@@ -175,21 +193,28 @@ async def accept_reply_handler (clbck: CallbackQuery):
                     await clbck.bot.edit_message_text(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), text=f'{get_poll_name(poll_id=poll_id)} id:{poll_id}')
                     await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.poll_list_mk_generator(poll_id=poll_id))
                     set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{poll_id}') 
-
                 case DialogStatuses.change_question_type.value | DialogStatuses.change_question.value:
                     await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(user_id=clbck.from_user.id)) 
                     await clbck.bot.edit_message_text(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), text=get_question(question_id=object_id))
                     await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id), reply_markup=director_keyboards.question_list_mk_generator(question_id=object_id))
                     set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.question.value}{DialogStatuses.divider.value}{object_id}') 
-
+                case DialogStatuses.send_poll.value:
+                    await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(user_id=clbck.from_user.id)) 
+                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{object_id}') 
+                    
 @router.callback_query(F.data == F.data)
 async def custom_reply_handler(clbck: CallbackQuery):
     role = get_role(user_id=clbck.from_user.id)
+    object_name, object_id = clbck.data.split(CallBacks.prefix_divider.value)
     match role:
         case Roles.delegate.value:
-            pass
+            match object_name:
+                case CallBacks.answer.value:
+                    await clbck.message.edit_text(text=get_poll_name(poll_id=object_id))
+                    await clbck.message.edit_reply_markup(reply_markup=delegate_keyboards.poll_list_mk_generator(poll_id=object_id))
+                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{object_id}')
+                    
         case Roles.director.value:
-            object_name, object_id = clbck.data.split(CallBacks.prefix_divider.value)
             match object_name:
                 
                 case CallBacks.delete_stuff_prefix.value:

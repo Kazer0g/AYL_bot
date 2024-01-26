@@ -5,18 +5,18 @@ from .db_functions import connect_db
 
 conn, cursor = connect_db()
 
-def add_user (username, user_id):
+def add_user (username, user_id, mode):
     try:
         cursor.execute(
-            'INSERT INTO users (username, user_id) VALUES (?, ?)',
-            (username, user_id)
+            'INSERT INTO users (username, user_id, mode) VALUES (?, ?, ?)',
+            (username, user_id, mode)
         )
         conn.commit()
         return get_role(user_id=user_id)
     except sqlite3.IntegrityError:
         cursor.execute(
-            'UPDATE users SET status = ? WHERE user_id = ?', 
-            (Statuses.status_active.value, user_id)
+            'UPDATE users SET status = ? AND mode = ? WHERE user_id = ?', 
+            (Statuses.status_active.value, mode, user_id)
         )
 
         cursor.execute(
@@ -87,3 +87,12 @@ def set_main_message_id (user_id, message_id):
         'UPDATE users SET main_message_id = ? WHERE user_id = ?',
         (message_id+1, user_id)
     )
+    
+def get_delegates(thread):
+    match thread:
+        case Statuses.thread_global.value:
+            cursor.execute(
+                'SELECT user_id FROM users WHERE conference_role = ? AND conference_status = ?',
+                ('delegate', 'active')
+            )
+            return cursor.fetchall()

@@ -18,6 +18,7 @@ class ButtonsText(Enum):
 
     back_to_poll = 'К анкете'
     back = 'Назад'
+    answer = 'Заполнить анкету'
 
     yes = 'Да'
     no = 'Нет'
