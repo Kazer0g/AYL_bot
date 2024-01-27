@@ -39,9 +39,7 @@ class CallBacks (Enum):
     delete = 'delete'
     poll = 'poll'
     question = 'question'
-    
-    take = 'take'
-    answer = 'answer'
+
 
     thread_prefix = 'thraed'
     thread_1 = 'thread_1'

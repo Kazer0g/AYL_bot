@@ -1,5 +1,4 @@
 import logging
-from readline import replace_history_item
 import aiogram
 import texts
 from aiogram import F, Router, exceptions
@@ -30,6 +29,8 @@ from sqlite_db import (
     get_delegates,
     get_question_type,
     add_answer,
+    send_poll,
+    get_polls_ids,
 )
 
 # from validators import
@@ -70,7 +71,8 @@ async def main_menu_reply_handler(clbck: CallbackQuery):
     role = get_role(user_id=clbck.from_user.id)
     match role:
         case Roles.delegate.value:
-            await clbck.message.edit_text(text='Тут будут отображаться опросы')
+            await clbck.message.edit_text(text=MenuTexts.main_menu.value)
+            await clbck.message.edit_reply_markup(reply_markup=delegate_keyboards.polls_list_mk_generator(user_id=clbck.from_user.id))
         case Roles.director.value:
             await clbck.message.edit_text(text=MenuTexts.main_menu.value)
             await clbck.message.edit_reply_markup(reply_markup=director_keyboards.main_menu_mk)
@@ -177,7 +179,7 @@ async def accepr_reply_handler (clbck: CallbackQuery):
                     poll_type = get_poll_type(poll_id=object_id)
                     delegate_ids = get_delegates(thread=poll_type)
                     for id in delegate_ids:
-                        await clbck.bot.send_message(chat_id=id[0], text=get_poll_name(poll_id=object_id), reply_markup=delegate_keyboards.answer_mk_generator(object_id))
+                        send_poll(user_id=id[0], polls_ids=get_polls_ids(user_id=id[0])+[object_id])
                     await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(user_id=clbck.from_user.id)) 
                     set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{object_id}')
                     
@@ -220,9 +222,10 @@ async def custom_reply_handler(clbck: CallbackQuery):
     match role:
         case Roles.delegate.value:
             match object_name:
-                case CallBacks.take.value:
+                case CallBacks.poll.value:
                     await clbck.message.edit_text(text=get_poll_name(poll_id=object_id))
                     await clbck.message.edit_reply_markup(reply_markup=delegate_keyboards.poll_list_mk_generator(poll_id=object_id, user_id=clbck.from_user.id))
+                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=clbck.data)
                 case CallBacks.question.value:
                     question_type = get_question_type(question_id=object_id)
                     match question_type:

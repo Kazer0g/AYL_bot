@@ -5,7 +5,6 @@ from .db_functions import connect_db
 conn, cursor = connect_db()
 
 def add_user (user_id, mode, username):
-    print (user_id, username)
     try:
         cursor.execute(
             'INSERT INTO users (username, user_id, mode) VALUES (?, ?, ?)',
@@ -96,3 +95,21 @@ def get_delegates(thread):
                 ('delegate', 'active')
             )
             return cursor.fetchall()
+        
+def get_polls_ids(user_id) -> list:
+    cursor.execute(
+        'SELECT polls_ids FROM users WHERE user_id = ?',
+        (user_id,)
+    )
+    polls_ids = list(set(str(cursor.fetchall()[0][0]).split(':')))
+    if '' in polls_ids:
+        polls_ids = []
+    return polls_ids
+
+def send_poll(user_id, polls_ids):
+    polls_ids = ":".join(polls_ids)
+    cursor.execute(
+        'UPDATE users SET polls_ids = ? WHERE user_id = ?',
+        (polls_ids, user_id)
+    )
+    conn.commit()

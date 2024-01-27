@@ -5,21 +5,31 @@ from aiogram.types import (
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
 )
-from sqlite_db import questions_db, answers_db
-from enums import ButtonsText, CallBacks
+from sqlite_db import questions_db, answers_db, users_db, polls_db
+from enums import ButtonsText, CallBacks, MenuTexts
 
-def answer_mk_generator(poll_id):
-    answer_kb = [
-        [InlineKeyboardButton(text=ButtonsText.answer.value, callback_data=f'{CallBacks.take.value}{CallBacks.divider.value}{poll_id}')]
+def polls_list_mk_generator(user_id):
+    polls_ids = users_db.get_polls_ids(user_id)
+    
+    polls_list_kb = [
+        
     ]
-    return InlineKeyboardMarkup(inline_keyboard=answer_kb)
+    print(polls_ids)
+    if len(polls_ids) > 0:
+           for poll_id in polls_ids:
+               polls_list_kb.append(
+                   [InlineKeyboardButton(text=polls_db.get_poll_name(poll_id=poll_id), callback_data=f'{CallBacks.poll.value}{CallBacks.divider.value}{poll_id}')]
+               )
+    else:
+        polls_list_kb.append(
+            [InlineKeyboardButton(text=ButtonsText.no_polls.value, callback_data='null')]
+        )
+    return InlineKeyboardMarkup(inline_keyboard=polls_list_kb)
 
 def poll_list_mk_generator(poll_id, user_id):
     flag = True
     questions = questions_db.get_questions(poll_id=poll_id)
-    poll_list = [
-        
-    ]
+    poll_list = []
     for question_id_db in questions:
         question_id = question_id_db[0]
         question = questions_db.get_question(question_id=question_id)
@@ -36,7 +46,7 @@ def poll_list_mk_generator(poll_id, user_id):
             [InlineKeyboardButton(text=ButtonsText.send_poll.value, callback_data=CallBacks.send_poll.value)]
         )
     poll_list.append(
-        [InlineKeyboardButton(text=ButtonsText.back.value, callback_data=CallBacks.reject.value)]
+        [InlineKeyboardButton(text=MenuTexts.main_menu.value, callback_data=CallBacks.main_menu.value)]
     )
     return InlineKeyboardMarkup(inline_keyboard=poll_list)
 def type_1_5_mk_generator(question_id):
