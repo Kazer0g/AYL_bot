@@ -9,15 +9,14 @@ from sqlite_db import questions_db, answers_db, users_db, polls_db
 from enums import ButtonsText, CallBacks, MenuTexts
 
 def polls_list_mk_generator(user_id):
-    polls_ids = users_db.get_polls_ids(user_id)
+    polls_ids = answers_db.get_polls_ids(user_id)
     
     polls_list_kb = [
         [InlineKeyboardButton(text=ButtonsText.reload.value, callback_data=CallBacks.reload.value)]
     ]
-    print(polls_ids)
     for poll_id in polls_ids:
         polls_list_kb.append(
-            [InlineKeyboardButton(text=polls_db.get_poll_name(poll_id=poll_id), callback_data=f'{CallBacks.poll.value}{CallBacks.divider.value}{poll_id}')]
+            [InlineKeyboardButton(text=polls_db.get_poll_name(poll_id=poll_id[0]), callback_data=f'{CallBacks.poll.value}{CallBacks.divider.value}{poll_id[0]}')]
         )
     return InlineKeyboardMarkup(inline_keyboard=polls_list_kb)
 

@@ -31,6 +31,7 @@ from sqlite_db import (
     add_answer,
     send_poll,
     get_polls_ids,
+    send_answered_poll
 )
 
 # from validators import
@@ -107,10 +108,10 @@ async def poll_type_reply_handler(clbck: CallbackQuery):
 
 @router.callback_query(F.data == CallBacks.send_poll.value)
 async def sed_poll_reply_handler(clbck: CallbackQuery):
-    dialog_status = get_dialog_status(user_id=clbck.from_user.id)
-    object_name, object_id = dialog_status.split(DialogStatuses.divider.value)
-    await clbck.message.answer(text=texts.SEND_POLL, reply_markup=common_keyboards.accept_mk)
-    set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.send_poll.value}{DialogStatuses.divider.value}{dialog_status}')
+            dialog_status = get_dialog_status(user_id=clbck.from_user.id)
+            object_name, object_id = dialog_status.split(DialogStatuses.divider.value)
+            await clbck.message.answer(text=texts.SEND_POLL, reply_markup=common_keyboards.accept_mk)
+            set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.send_poll.value}{DialogStatuses.divider.value}{dialog_status}')
     
 @router.callback_query(F.data == CallBacks.add_question.value)
 async def add_question_reply_handler(clbck: CallbackQuery):
@@ -164,9 +165,13 @@ async def accepr_reply_handler (clbck: CallbackQuery):
     match role:
         case Roles.delegate.value:
             match dialog_prefix:
-                case DialogStatuses.send_poll:
-                    pass
-                
+                case DialogStatuses.send_poll.value:
+                    set_dialog_status(user_id=clbck.from_user.id, dialog_status=DialogStatuses.main_menu.value)
+                    send_answered_poll(user_id=clbck.from_user.id, poll_id=object_id)
+                    await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(clbck.from_user.id))
+                    await clbck.bot.edit_message_text(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id),text=MenuTexts.main_menu.value)
+                    await clbck.bot.edit_message_reply_markup(chat_id=clbck.message.chat.id, message_id=get_main_message_id(clbck.from_user.id),reply_markup=delegate_keyboards.polls_list_mk_generator(user_id=clbck.from_user.id))
+                    
         case Roles.director.value:
             match dialog_prefix:
                 case DialogStatuses.delete.value:
@@ -187,7 +192,7 @@ async def accepr_reply_handler (clbck: CallbackQuery):
                     poll_type = get_poll_type(poll_id=object_id)
                     delegate_ids = get_delegates(thread=poll_type)
                     for id in delegate_ids:
-                        send_poll(user_id=id[0], polls_ids=get_polls_ids(user_id=id[0])+[object_id])
+                        send_poll(user_id=id[0], poll_id=object_id)
                     await message_deleter(msg=clbck.message, main_message_id=get_main_message_id(user_id=clbck.from_user.id)) 
                     set_dialog_status(user_id=clbck.from_user.id, dialog_status=f'{DialogStatuses.poll.value}{DialogStatuses.divider.value}{object_id}')
                     
