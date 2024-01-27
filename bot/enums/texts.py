@@ -5,6 +5,7 @@ class MenuTexts(Enum):
     presenters = 'Штат'
     polls = 'Анкеты'
     poll = 'Анкета'
+    feedback = 'Обратная связь'
 
 class ButtonsText(Enum):
     presenters = 'Ведущие'

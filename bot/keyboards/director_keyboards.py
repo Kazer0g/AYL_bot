@@ -7,7 +7,7 @@ from aiogram.types import (
 )
 from enums import ButtonsText, CallBacks
 from enums import DialogStatuses
-from sqlite_db import users_db, polls_db, questions_db, get_question, get_question_type
+from sqlite_db import users_db, polls_db, questions_db, get_question, get_question_type, get_answered_polls, get_users, get_username
 
 main_menu_kb = [
     [InlineKeyboardButton(text=ButtonsText.presenters.value, callback_data=CallBacks.presenters.value)],
@@ -37,6 +37,37 @@ def staff_list_mk_generator ():
          InlineKeyboardButton(text='>', callback_data='next')]
     )
     return InlineKeyboardMarkup(inline_keyboard=staff_list)
+
+def feedback_list_mk_generator():
+    feedback_list_kb = [[InlineKeyboardButton(text=ButtonsText.main_menu.value, callback_data=CallBacks.main_menu.value)]]
+
+    polls_ids = get_answered_polls()
+    for poll_id in polls_ids:
+        poll_id = poll_id[0]
+        poll_name = polls_db.get_poll_name(poll_id=poll_id)
+        feedback_list_kb.append([InlineKeyboardButton(text=poll_name, callback_data=f'{CallBacks.poll.value}{CallBacks.divider.value}{poll_id}')])
+                          
+    feedback_list_kb.append(
+        [InlineKeyboardButton(text="<", callback_data="previous"), 
+         InlineKeyboardButton(text='&&&', callback_data='page'),
+         InlineKeyboardButton(text='>', callback_data='next')]
+    )
+
+    return InlineKeyboardMarkup(inline_keyboard=feedback_list_kb)
+
+def feedback_users_list_mk_generator(poll_id):
+    users_list = [
+        [InlineKeyboardButton(text=ButtonsText.main_menu.value, callback_data=CallBacks.main_menu.value)],
+        [InlineKeyboardButton(text=ButtonsText.back.value, callback_data=CallBacks.feedback.value)]
+    ]
+    users_ids = get_users(poll_id=poll_id)
+    for user_id in users_ids:
+        id = user_id[0]
+        users_list.append(
+            [InlineKeyboardButton(text=get_username(user_id=id), callback_data=f'{CallBacks.answer.value}{CallBacks.divider.value}{poll_id}{CallBacks.spliter.value}{id}')]
+        )
+        
+    return InlineKeyboardMarkup(inline_keyboard=users_list)
 
 def polls_list_mk_generator ():
     polls = polls_db.get_polls()

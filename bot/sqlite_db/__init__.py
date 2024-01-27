@@ -31,4 +31,4 @@ from .questions_db import (
     get_poll_id,
     get_question_type,
 )
-from .answers_db import add_answer, get_answer, send_poll, send_answered_poll, get_polls_ids
+from .answers_db import add_answer, get_answer, send_poll, send_answered_poll, get_polls_ids, get_answered_polls, get_users, get_answers
