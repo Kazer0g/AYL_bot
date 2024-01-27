@@ -12,17 +12,12 @@ def polls_list_mk_generator(user_id):
     polls_ids = users_db.get_polls_ids(user_id)
     
     polls_list_kb = [
-        
+        [InlineKeyboardButton(text=ButtonsText.reload.value, callback_data=CallBacks.reload.value)]
     ]
     print(polls_ids)
-    if len(polls_ids) > 0:
-           for poll_id in polls_ids:
-               polls_list_kb.append(
-                   [InlineKeyboardButton(text=polls_db.get_poll_name(poll_id=poll_id), callback_data=f'{CallBacks.poll.value}{CallBacks.divider.value}{poll_id}')]
-               )
-    else:
+    for poll_id in polls_ids:
         polls_list_kb.append(
-            [InlineKeyboardButton(text=ButtonsText.no_polls.value, callback_data='null')]
+            [InlineKeyboardButton(text=polls_db.get_poll_name(poll_id=poll_id), callback_data=f'{CallBacks.poll.value}{CallBacks.divider.value}{poll_id}')]
         )
     return InlineKeyboardMarkup(inline_keyboard=polls_list_kb)
 

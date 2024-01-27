@@ -20,7 +20,7 @@ class ButtonsText(Enum):
     back = 'Назад'
     answer = 'Заполнить анкету'
     
-    no_polls = 'Нет доступных анкет для прохождения'
+    reload = 'Обновить'
 
     yes = 'Да'
     no = 'Нет'

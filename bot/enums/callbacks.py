@@ -30,6 +30,7 @@ class CallBacks (Enum):
     role_prefix = 'role'
     delete_stuff_prefix = 'delete_stuff'
     
+    reload = 'reload'
 
     poll_id_prefix = 'poll_id'
     poll_name_prefix = 'poll_name'
@@ -40,6 +41,7 @@ class CallBacks (Enum):
     poll = 'poll'
     question = 'question'
 
+    answer = 'answer'
 
     thread_prefix = 'thraed'
     thread_1 = 'thread_1'

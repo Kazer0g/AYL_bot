@@ -4,9 +4,19 @@ conn, cursor = connect_db()
 
 def add_answer(question_id, user_id, answer, poll_id):
     cursor.execute(
-        'INSERT INTO question_answers (question_id, user_id, answer, poll_id) VALUES (?, ?, ?, ?)',
-        (question_id, user_id, answer, poll_id)
+        'SELECT answer FROM question_answers WHERE user_id = ? AND question_id = ?',
+        (user_id, question_id)
     )
+    if len(cursor.fetchall()) == 0:
+        cursor.execute(
+            'INSERT INTO question_answers (question_id, user_id, answer, poll_id) VALUES (?, ?, ?, ?)',
+            (question_id, user_id, answer, poll_id)
+        )
+    else:
+        cursor.execute(
+            'UPDATE question_answers SET answer = ? WHERE user_id = ? AND question_id = ?',
+            (answer, user_id, question_id)
+        )
     conn.commit()
 
 def get_answer(question_id, user_id):
